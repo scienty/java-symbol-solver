@@ -2,12 +2,15 @@ package me.tomassetti.symbolsolver.javaparsermodel.contexts;
 
 import com.github.javaparser.ast.body.*;
 import me.tomassetti.symbolsolver.resolution.MethodResolutionLogic;
+import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
+import me.tomassetti.symbolsolver.model.declarations.TypeDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.ValueDeclaration;
 import me.tomassetti.symbolsolver.model.resolution.SymbolReference;
 import me.tomassetti.symbolsolver.model.resolution.TypeSolver;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.resolution.SymbolDeclarator;
 import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFactory;
+import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserEnumConstantDeclaration;
 import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
@@ -84,6 +87,16 @@ public class EnumDeclarationContext extends AbstractJavaParserContext<EnumDeclar
                     candidateMethods.add(new JavaParserMethodDeclaration(method, typeSolver));
                 }
             }
+        }
+        
+        String superclassName = "java.lang.Object";
+        SymbolReference<TypeDeclaration> superclass = solveType(superclassName, typeSolver);
+        if (!superclass.isSolved()) {
+            throw new UnsolvedSymbolException(this, superclassName);
+        }
+        SymbolReference<MethodDeclaration> res = superclass.getCorrespondingDeclaration().solveMethod(name, parameterTypes);
+        if (res.isSolved()) {
+            candidateMethods.add(res.getCorrespondingDeclaration());
         }
         // TODO consider inherited methods
         return MethodResolutionLogic.findMostApplicable(candidateMethods, name, parameterTypes, typeSolver);

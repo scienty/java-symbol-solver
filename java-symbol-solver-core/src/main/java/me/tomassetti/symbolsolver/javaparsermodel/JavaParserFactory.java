@@ -54,8 +54,8 @@ public class JavaParserFactory {
     public static SymbolDeclarator getSymbolDeclarator(Node node, TypeSolver typeSolver) {
         if (node instanceof FieldDeclaration) {
             return new FieldSymbolDeclarator((FieldDeclaration) node, typeSolver);
-        } else if (node instanceof Parameter) {
-            return new ParameterSymbolDeclarator((Parameter) node, typeSolver);
+        } else if (node instanceof BaseParameter) {
+            return new ParameterSymbolDeclarator((BaseParameter) node, typeSolver);
         } else if (node instanceof ExpressionStmt) {
             ExpressionStmt expressionStmt = (ExpressionStmt) node;
             if (expressionStmt.getExpression() instanceof VariableDeclarationExpr) {

@@ -1,5 +1,6 @@
 package me.tomassetti.symbolsolver.model.declarations;
 
+import me.tomassetti.symbolsolver.model.invokations.ConstructorUsage;
 import me.tomassetti.symbolsolver.model.invokations.MethodUsage;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.model.resolution.Context;
@@ -7,18 +8,16 @@ import me.tomassetti.symbolsolver.model.resolution.Context;
 import java.util.List;
 
 /**
- * A declaration of a method (either in an interface, a class, an enum or an annotation).
- *
- * @author Federico Tomassetti
+ * A declaration of a method (a class, an enum).
+ * based on MethodDeclaration
+ * @author Prakash Sidaraddi
  */
-public interface MethodDeclaration extends Declaration, TypeParametrized {
+public interface ConstructorDeclaration extends Declaration, TypeParametrized {
 
     /**
      * The type in which the method is declared.
      */
     TypeDeclaration declaringType();
-
-    TypeUsage getReturnType();
     
     List<TypeUsage> getExceptionTypes();
 
@@ -50,7 +49,7 @@ public interface MethodDeclaration extends Declaration, TypeParametrized {
      * context.
      */
     @Deprecated
-    MethodUsage resolveTypeVariables(Context context, List<TypeUsage> parameterTypes);
+    ConstructorUsage resolveTypeVariables(Context context, List<TypeUsage> parameterTypes);
 
     boolean isAbstract();
 

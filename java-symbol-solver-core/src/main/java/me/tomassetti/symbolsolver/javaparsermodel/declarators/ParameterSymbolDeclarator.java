@@ -1,19 +1,20 @@
 package me.tomassetti.symbolsolver.javaparsermodel.declarators;
 
-import com.github.javaparser.ast.body.Parameter;
-import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
-import me.tomassetti.symbolsolver.model.declarations.ValueDeclaration;
-import me.tomassetti.symbolsolver.model.resolution.TypeSolver;
-import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserSymbolDeclaration;
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ParameterSymbolDeclarator extends AbstractSymbolDeclarator<Parameter> {
+import com.github.javaparser.ast.body.BaseParameter;
+
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserSymbolDeclaration;
+import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
+import me.tomassetti.symbolsolver.model.declarations.ValueDeclaration;
+import me.tomassetti.symbolsolver.model.resolution.TypeSolver;
+
+public class ParameterSymbolDeclarator extends AbstractSymbolDeclarator<BaseParameter> {
 
 
-    public ParameterSymbolDeclarator(Parameter wrappedNode, TypeSolver typeSolver) {
+    public ParameterSymbolDeclarator(BaseParameter wrappedNode, TypeSolver typeSolver) {
         super(wrappedNode, typeSolver);
     }
 

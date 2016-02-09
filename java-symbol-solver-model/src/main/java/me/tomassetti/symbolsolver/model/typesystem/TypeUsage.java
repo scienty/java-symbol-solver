@@ -43,7 +43,7 @@ public interface TypeUsage {
      * Is this a non primitive value?
      */
     default boolean isReference() {
-        return isReferenceType() || isArray() || isTypeVariable() || isNull();
+        return isReferenceType() || isArray() || isTypeVariable() || isNull() || isClassType();
     }
 
     /**
@@ -63,6 +63,10 @@ public interface TypeUsage {
     }
 
     default boolean isWildcard() {
+        return false;
+    }
+    
+    default boolean isClassType() {
         return false;
     }
 

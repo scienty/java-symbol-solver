@@ -74,6 +74,11 @@ public class ReflectionMethodDeclaration implements MethodDeclaration {
     public TypeUsage getReturnType() {
         return ReflectionFactory.typeUsageFor(method.getGenericReturnType(), typeSolver);
     }
+    
+    @Override
+    public List<TypeUsage> getExceptionTypes() {
+    	return Arrays.stream(method.getExceptionTypes()).map((exType) -> ReflectionFactory.typeUsageFor(exType, typeSolver)).collect(Collectors.toList());
+    }
 
     @Override
     public int getNoParams() {

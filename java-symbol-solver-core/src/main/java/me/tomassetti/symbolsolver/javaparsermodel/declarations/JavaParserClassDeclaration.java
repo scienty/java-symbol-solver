@@ -11,6 +11,7 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import me.tomassetti.symbolsolver.logic.AbstractClassDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.*;
+import me.tomassetti.symbolsolver.model.invokations.MethodUsage;
 import me.tomassetti.symbolsolver.model.resolution.Context;
 import me.tomassetti.symbolsolver.model.resolution.SymbolReference;
 import me.tomassetti.symbolsolver.model.resolution.TypeParameter;
@@ -25,6 +26,7 @@ import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -353,7 +355,24 @@ public class JavaParserClassDeclaration extends AbstractClassDeclaration {
 
     @Override
     public Set<MethodDeclaration> getDeclaredMethods() {
-        throw new UnsupportedOperationException();
+    	Set<MethodDeclaration> methods = new HashSet<>();
+        for (BodyDeclaration memberDecl : wrappedNode.getMembers()) {
+        	if ( memberDecl instanceof com.github.javaparser.ast.body.MethodDeclaration ) {
+        		methods.add(new JavaParserMethodDeclaration((com.github.javaparser.ast.body.MethodDeclaration) memberDecl, typeSolver));
+        	}
+        }
+        return methods;
+    }
+    
+    @Override
+    public Set<ConstructorDeclaration> getDeclaredConstructors() {
+    	Set<ConstructorDeclaration> constructors = new HashSet<>();
+        for (BodyDeclaration memberDecl : wrappedNode.getMembers()) {
+        	if ( memberDecl instanceof com.github.javaparser.ast.body.ConstructorDeclaration ) {
+        		constructors.add(new JavaParserConstructorDeclaration((com.github.javaparser.ast.body.ConstructorDeclaration) memberDecl, typeSolver));
+        	}
+        }
+        return constructors;
     }
 
     private ReferenceTypeUsageImpl toTypeUsage(ClassOrInterfaceType type, TypeSolver typeSolver) {

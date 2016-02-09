@@ -1,6 +1,10 @@
 package me.tomassetti.symbolsolver.reflectionmodel;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.BodyDeclaration;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
+
 import me.tomassetti.symbolsolver.logic.AbstractClassDeclaration;
 import me.tomassetti.symbolsolver.resolution.MethodResolutionLogic;
 import me.tomassetti.symbolsolver.model.declarations.*;
@@ -15,6 +19,9 @@ import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsageImpl;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.javaparsermodel.LambdaArgumentTypeUsagePlaceholder;
 import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
+import me.tomassetti.symbolsolver.javassistmodel.JavassistConstructorDeclaration;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -37,6 +44,13 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
         return Arrays.stream(clazz.getDeclaredMethods())
                 .filter(m -> !m.isSynthetic() && !m.isBridge())
                 .map(m -> new ReflectionMethodDeclaration(m, typeSolver()))
+                .collect(Collectors.toSet());
+    }
+    
+    @Override
+    public Set<ConstructorDeclaration> getDeclaredConstructors() {
+    	return Arrays.stream(clazz.getDeclaredConstructors())
+                .map(m -> new ReflectionConstructorDeclaration(m, typeSolver()))
                 .collect(Collectors.toSet());
     }
 
@@ -239,12 +253,24 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
             }
         }
         for (ReferenceTypeUsage ancestor : getAllAncestors()) {
-            if (ancestor.getTypeDeclaration().hasField(name)) {
-                return ancestor.getTypeDeclaration().getField(name).replaceType(ancestor.getFieldType(name).get());
+            if (ancestor.getTypeDeclaration().isInterface() == false ) {
+            	if ( ancestor.getTypeDeclaration().hasField(name) )
+            		return ancestor.getTypeDeclaration().getField(name).replaceType(ancestor.getFieldType(name).get());
             }
         }
         throw new UnsolvedSymbolException("Field in " + this, name);
     }
+    
+    public ReflectionClassDeclaration getDeclaration(String name) {
+        for (Class<?> subClazz : clazz.getDeclaredClasses()) {
+            if (subClazz.getName().equals(name)) {
+            	return new ReflectionClassDeclaration(subClazz, typeSolver);
+            }
+        }
+        
+        throw new UnsolvedSymbolException("Declaration in " + this, name);
+    }
+    
 
     @Override
     public SymbolReference<? extends ValueDeclaration> solveSymbol(String name, TypeSolver typeSolver) {
@@ -258,7 +284,7 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
 
     @Override
     public SymbolReference<TypeDeclaration> solveType(String substring, TypeSolver typeSolver) {
-        return SymbolReference.unsolved(TypeDeclaration.class);
+    	return SymbolReference.solved(getDeclaration(clazz.getName() + "$" + substring));
     }
 
     @Override

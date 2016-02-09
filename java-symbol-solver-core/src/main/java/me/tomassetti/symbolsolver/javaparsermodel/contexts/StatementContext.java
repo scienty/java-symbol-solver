@@ -1,7 +1,9 @@
 package me.tomassetti.symbolsolver.javaparsermodel.contexts;
 
+import com.github.javaparser.ast.body.MultiTypeParameter;
 import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.CatchClause;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
@@ -61,6 +63,17 @@ public class StatementContext<N extends Statement> extends AbstractJavaParserCon
         }
         if (wrappedNode.getParentNode() instanceof IfStmt) {
             return getParent().solveSymbolAsValue(name, typeSolver);
+        }
+        if ( wrappedNode.getParentNode() instanceof CatchClause ) {
+        	CatchClause catchClause = (CatchClause) wrappedNode.getParentNode();
+        	MultiTypeParameter typeParam = catchClause.getExcept();
+        	if ( typeParam.getId().getName().equals(name) ) {
+        		SymbolDeclarator symbolDeclarator = JavaParserFactory.getSymbolDeclarator(typeParam, typeSolver);
+        		 Optional<Value> symbolReference = solveWithAsValue(symbolDeclarator, name, typeSolver);
+                 if (symbolReference.isPresent()) {
+                     return symbolReference;
+                 }
+        	}
         }
         if (!(wrappedNode.getParentNode() instanceof BlockStmt)) {
             return getParent().solveSymbolAsValue(name, typeSolver);

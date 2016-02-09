@@ -6,6 +6,8 @@ import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.NameExpr;
+
 import me.tomassetti.symbolsolver.logic.AbstractTypeDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.*;
 import me.tomassetti.symbolsolver.model.invokations.MethodUsage;
@@ -17,10 +19,12 @@ import me.tomassetti.symbolsolver.model.typesystem.ArrayTypeUsage;
 import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsage;
 import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsageImpl;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
+import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFacade;
 import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFactory;
 import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -183,7 +187,18 @@ public class JavaParserEnumDeclaration extends AbstractTypeDeclaration implement
             }
         }
 
-        throw new UnsolvedSymbolException("Field " + name);
+        ClassDeclaration superclass = (ClassDeclaration) this.getSuperClass().getTypeDeclaration();
+        if (superclass != null) {
+            return superclass.getField(name);
+        } else {
+            throw new UnsolvedSymbolException("Field " + this, name);
+        }
+    }
+    
+    @Override
+    public ReferenceTypeUsageImpl getSuperClass() {
+    	return new ReferenceTypeUsageImpl(typeSolver.getRoot().solveType("java.lang.Object").asType().asClass(), typeSolver);
+    	//TODO: support other super classes
     }
 
     @Override
@@ -249,8 +264,13 @@ public class JavaParserEnumDeclaration extends AbstractTypeDeclaration implement
                 }
             }
         }
-
-        return false;
+        
+        ClassDeclaration superclass = (ClassDeclaration) this.getSuperClass().getTypeDeclaration();
+        if (superclass != null) {
+            return superclass.hasField(name);
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -293,6 +313,11 @@ public class JavaParserEnumDeclaration extends AbstractTypeDeclaration implement
         @Override
         public TypeUsage getReturnType() {
             return new ArrayTypeUsage(new ReferenceTypeUsageImpl(JavaParserEnumDeclaration.this, typeSolver));
+        }
+        
+        @Override
+        public List<TypeUsage> getExceptionTypes() {
+        	return new ArrayList<TypeUsage>();
         }
 
         @Override

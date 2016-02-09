@@ -1,12 +1,62 @@
 package me.tomassetti.symbolsolver.javaparsermodel;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.body.*;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.ArrayCreationExpr;
+import com.github.javaparser.ast.expr.AssignExpr;
+import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.BooleanLiteralExpr;
+import com.github.javaparser.ast.expr.CastExpr;
+import com.github.javaparser.ast.expr.CharLiteralExpr;
+import com.github.javaparser.ast.expr.ClassExpr;
+import com.github.javaparser.ast.expr.ConditionalExpr;
+import com.github.javaparser.ast.expr.EnclosedExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
+import com.github.javaparser.ast.expr.InstanceOfExpr;
+import com.github.javaparser.ast.expr.IntegerLiteralExpr;
+import com.github.javaparser.ast.expr.LambdaExpr;
+import com.github.javaparser.ast.expr.LongLiteralExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.NullLiteralExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.ast.expr.StringLiteralExpr;
+import com.github.javaparser.ast.expr.ThisExpr;
+import com.github.javaparser.ast.expr.UnaryExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
-import com.github.javaparser.ast.type.*;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.ReferenceType;
+import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.ast.type.UnknownType;
+import com.github.javaparser.ast.type.VoidType;
+import com.github.javaparser.ast.type.WildcardType;
+
 import javaslang.Tuple2;
-import me.tomassetti.symbolsolver.javaparsermodel.declarations.*;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserInterfaceDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserSymbolDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserTypeVariableDeclaration;
 import me.tomassetti.symbolsolver.logic.FunctionalInterfaceLogic;
 import me.tomassetti.symbolsolver.logic.GenericTypeInferenceLogic;
 import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
@@ -17,15 +67,18 @@ import me.tomassetti.symbolsolver.model.resolution.Context;
 import me.tomassetti.symbolsolver.model.resolution.SymbolReference;
 import me.tomassetti.symbolsolver.model.resolution.TypeParameter;
 import me.tomassetti.symbolsolver.model.resolution.TypeSolver;
-import me.tomassetti.symbolsolver.model.typesystem.*;
-import me.tomassetti.symbolsolver.resolution.*;
+import me.tomassetti.symbolsolver.model.typesystem.ArrayTypeUsage;
+import me.tomassetti.symbolsolver.model.typesystem.NullTypeUsage;
+import me.tomassetti.symbolsolver.model.typesystem.PrimitiveTypeUsage;
+import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsage;
+import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsageImpl;
+import me.tomassetti.symbolsolver.model.typesystem.TypeParameterUsage;
+import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
+import me.tomassetti.symbolsolver.model.typesystem.VoidTypeUsage;
+import me.tomassetti.symbolsolver.model.typesystem.WildcardUsage;
+import me.tomassetti.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
+import me.tomassetti.symbolsolver.resolution.SymbolSolver;
 import me.tomassetti.symbolsolver.resolution.typesolvers.JreTypeSolver;
-
-import java.util.*;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Class to be used by final users to solve symbols for JavaParser ASTs.
@@ -208,11 +261,27 @@ public class JavaParserFacade {
         if (node instanceof NameExpr) {
             NameExpr nameExpr = (NameExpr) node;
             logger.finest("getType on name expr " + node);
+           
+            try {
             Optional<me.tomassetti.symbolsolver.model.resolution.Value> value = new SymbolSolver(typeSolver).solveSymbolAsValue(nameExpr.getName(), nameExpr);
-            if (!value.isPresent()) {
-                throw new UnsolvedSymbolException("FOO Solving " + node, nameExpr.getName());
-            } else {
-                return value.get().getUsage();
+	            if (!value.isPresent()) {
+	                throw new UnsolvedSymbolException("FOO Solving " + node, nameExpr.getName());
+	            } else {
+	                return value.get().getUsage();
+	            }
+            } catch (UnsolvedSymbolException e) {
+                // Sure, it was not found as value because maybe it is a type and this is a static access
+            	SymbolReference<TypeDeclaration> typeAccessedStatically = JavaParserFactory.getContext(nameExpr, typeSolver).solveType(nameExpr.toString(), typeSolver);
+            	if (!typeAccessedStatically.isSolved()) {
+            		throw e;
+            	} else {
+            		TypeDeclaration typeDeclaration = typeAccessedStatically.getCorrespondingDeclaration();
+            		return new ReferenceTypeUsageImpl(typeDeclaration, typeSolver);
+            	}
+
+            } catch (Exception ex) {
+            	System.out.println(ex);
+            	throw ex;
             }
         } else if (node instanceof MethodCallExpr) {
             logger.finest("getType on method call " + node);
@@ -302,7 +371,16 @@ public class JavaParserFacade {
                         throw e;
                     } else {
                         // TODO here maybe we have to substitute type parameters
-                        return typeAccessedStatically.getCorrespondingDeclaration().getField(fieldAccessExpr.getField()).getType();
+                    	try {
+                    		return typeAccessedStatically.getCorrespondingDeclaration().getField(fieldAccessExpr.getField()).getType();
+                    	} catch (UnsolvedSymbolException | UnsupportedOperationException ex) {
+                    		//this again must be a nested static access
+                        	SymbolReference<TypeDeclaration> fieldReference = typeAccessedStatically.getCorrespondingDeclaration().solveType(fieldAccessExpr.getField(), typeSolver);
+                        	if ( fieldReference.isSolved() )
+                        		return new ReferenceTypeUsageImpl(fieldReference.getCorrespondingDeclaration(), typeSolver);
+                        	else 
+                        		throw e;
+                    	}
                     }
                 } else {
                     throw e;
@@ -388,6 +466,13 @@ public class JavaParserFacade {
                 res = new ArrayTypeUsage(res);
             }
             return res;
+        } else if (node instanceof ClassExpr) {
+        	ClassExpr classExpr = (ClassExpr) node;
+        	ReferenceTypeUsage typeUsage = convertToUsage(classExpr.getType(), node).asReferenceTypeUsage();
+        	List<TypeUsage> typeParms = new ArrayList<>();
+        	typeParms.add(typeUsage);
+        	
+        	return new ReferenceTypeUsageImpl(new ReflectionClassDeclaration(Class.class, typeSolver),  typeParms, typeSolver);
         } else {
             throw new UnsupportedOperationException(node.getClass().getCanonicalName());
         }

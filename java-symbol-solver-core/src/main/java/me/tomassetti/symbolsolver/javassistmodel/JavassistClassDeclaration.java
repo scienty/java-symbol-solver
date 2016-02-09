@@ -1,6 +1,8 @@
 package me.tomassetti.symbolsolver.javassistmodel;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.BodyDeclaration;
+
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
@@ -20,6 +22,7 @@ import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsageImpl;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.resolution.*;
 import me.tomassetti.symbolsolver.javaparsermodel.LambdaArgumentTypeUsagePlaceholder;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserConstructorDeclaration;
 import me.tomassetti.symbolsolver.javassistmodel.contexts.JavassistMethodContext;
 
 import java.util.*;
@@ -46,6 +49,13 @@ public class JavassistClassDeclaration extends AbstractClassDeclaration {
     public Set<MethodDeclaration> getDeclaredMethods() {
         return Arrays.stream(ctClass.getDeclaredMethods())
                 .map(m -> new JavassistMethodDeclaration(m, typeSolver()))
+                .collect(Collectors.toSet());
+    }
+    
+    @Override
+    public Set<ConstructorDeclaration> getDeclaredConstructors() {
+    	return Arrays.stream(ctClass.getDeclaredConstructors())
+                .map(m -> new JavassistConstructorDeclaration(m, typeSolver()))
                 .collect(Collectors.toSet());
     }
 

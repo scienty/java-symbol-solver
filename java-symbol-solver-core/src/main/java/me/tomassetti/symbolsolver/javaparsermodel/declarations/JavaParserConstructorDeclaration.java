@@ -1,14 +1,24 @@
 package me.tomassetti.symbolsolver.javaparsermodel.declarations;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ModifierSet;
 import com.github.javaparser.ast.expr.NameExpr;
 
-import javassist.NotFoundException;
-import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFacade;
+import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFactory;
+import me.tomassetti.symbolsolver.model.declarations.ConstructorDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.ParameterDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.TypeDeclaration;
+import me.tomassetti.symbolsolver.model.invokations.ConstructorUsage;
 import me.tomassetti.symbolsolver.model.invokations.MethodUsage;
 import me.tomassetti.symbolsolver.model.resolution.Context;
 import me.tomassetti.symbolsolver.model.resolution.TypeParameter;
@@ -16,26 +26,20 @@ import me.tomassetti.symbolsolver.model.resolution.TypeSolver;
 import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsage;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.model.typesystem.WildcardUsage;
-import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFacade;
-import me.tomassetti.symbolsolver.javaparsermodel.JavaParserFactory;
-import me.tomassetti.symbolsolver.javassistmodel.JavassistFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
+public class JavaParserConstructorDeclaration implements ConstructorDeclaration {
 
-public class JavaParserMethodDeclaration implements MethodDeclaration {
-
-    private com.github.javaparser.ast.body.MethodDeclaration wrappedNode;
+    private com.github.javaparser.ast.body.ConstructorDeclaration wrappedNode;
     private TypeSolver typeSolver;
 
-    public JavaParserMethodDeclaration(com.github.javaparser.ast.body.MethodDeclaration wrappedNode, TypeSolver typeSolver) {
+    public JavaParserConstructorDeclaration(com.github.javaparser.ast.body.ConstructorDeclaration wrappedNode, TypeSolver typeSolver) {
         this.wrappedNode = wrappedNode;
         this.typeSolver = typeSolver;
     }
 
     @Override
     public String toString() {
-        return "JavaParserMethodDeclaration{" +
+        return "JavaParserConstructorDeclaration{" +
                 "wrappedNode=" + wrappedNode +
                 ", typeSolver=" + typeSolver +
                 '}';
@@ -49,12 +53,7 @@ public class JavaParserMethodDeclaration implements MethodDeclaration {
             throw new UnsupportedOperationException();
         }
     }
-
-    @Override
-    public TypeUsage getReturnType() {
-        return JavaParserFacade.get(typeSolver).convert(wrappedNode.getType(), getContext());
-    }
-    
+   
     @Override
     public List<TypeUsage> getExceptionTypes() {
     	try {
@@ -87,11 +86,10 @@ public class JavaParserMethodDeclaration implements MethodDeclaration {
     }
 
     @Override
-    public MethodUsage resolveTypeVariables(Context context, List<TypeUsage> parameterTypes) {
-        TypeUsage returnType = replaceTypeParams(new JavaParserMethodDeclaration(wrappedNode, typeSolver).getReturnType(), typeSolver, context);
+    public ConstructorUsage resolveTypeVariables(Context context, List<TypeUsage> parameterTypes) {
         List<TypeUsage> params = new ArrayList<>();
         for (int i = 0; i < wrappedNode.getParameters().size(); i++) {
-            TypeUsage replaced = replaceTypeParams(new JavaParserMethodDeclaration(wrappedNode, typeSolver).getParam(i).getType(), typeSolver, context);
+            TypeUsage replaced = replaceTypeParams(new JavaParserConstructorDeclaration(wrappedNode, typeSolver).getParam(i).getType(), typeSolver, context);
             params.add(replaced);
         }
 
@@ -104,11 +102,7 @@ public class JavaParserMethodDeclaration implements MethodDeclaration {
             determineTypeParameters(determinedTypeParameters, formalParamType, actualParamType, typeSolver);
         }
 
-        for (String determinedParam : determinedTypeParameters.keySet()) {
-            returnType = returnType.replaceParam(determinedParam, determinedTypeParameters.get(determinedParam));
-        }
-
-        return new MethodUsage(new JavaParserMethodDeclaration(wrappedNode, typeSolver), params, returnType);
+        return new ConstructorUsage(new JavaParserConstructorDeclaration(wrappedNode, typeSolver), params);
     }
 
     private void determineTypeParameters(Map<String, TypeUsage> determinedTypeParameters, TypeUsage formalParamType, TypeUsage actualParamType, TypeSolver typeSolver) {
@@ -242,7 +236,7 @@ public class JavaParserMethodDeclaration implements MethodDeclaration {
 	 *
 	 * @return A visitable JavaParser node wrapped by this object.
 	 */
-	public com.github.javaparser.ast.body.MethodDeclaration getWrappedNode()
+	public com.github.javaparser.ast.body.ConstructorDeclaration getWrappedNode()
 	{
 		return wrappedNode;
 	}

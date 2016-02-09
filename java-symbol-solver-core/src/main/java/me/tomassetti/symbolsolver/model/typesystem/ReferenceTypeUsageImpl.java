@@ -17,7 +17,8 @@ import java.util.function.Predicate;
 // TODO Remove references to typeSolver: it is needed to instantiate other instances of ReferenceTypeUsage
 //      and to get the Object type declaration
 public class ReferenceTypeUsageImpl extends ReferenceTypeUsage {
-
+	private boolean isClassType = false;
+	
     @Override
     protected ReferenceTypeUsage create(TypeDeclaration typeDeclaration, List<TypeUsage> typeParametersCorrected, TypeSolver typeSolver) {
         return new ReferenceTypeUsageImpl(typeDeclaration, typeParametersCorrected, typeSolver);
@@ -31,6 +32,14 @@ public class ReferenceTypeUsageImpl extends ReferenceTypeUsage {
     public ReferenceTypeUsageImpl(TypeDeclaration typeDeclaration, TypeSolver typeSolver) {
         super(typeDeclaration, typeSolver);
     }
+    
+    /*
+     */
+    /*
+    public ReferenceTypeUsageImpl(TypeDeclaration typeDeclaration, boolean isClassType, TypeSolver typeSolver) {
+        super(typeDeclaration, typeSolver);
+        this.isClassType = isClassType;
+    }*/
 
     public ReferenceTypeUsageImpl(TypeDeclaration typeDeclaration, List<TypeUsage> typeParameters, TypeSolver typeSolver) {
         super(typeDeclaration, typeParameters, typeSolver);

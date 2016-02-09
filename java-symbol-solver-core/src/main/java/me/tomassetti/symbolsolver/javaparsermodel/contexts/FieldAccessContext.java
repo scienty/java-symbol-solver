@@ -42,7 +42,13 @@ public class FieldAccessContext extends AbstractJavaParserContext<FieldAccessExp
         if (wrappedNode.getFieldExpr().toString().equals(name)) {
             TypeUsage typeOfScope = JavaParserFacade.get(typeSolver).getType(scope);
             if (typeOfScope.isReferenceType()) {
-                Optional<TypeUsage> typeUsage = typeOfScope.asReferenceTypeUsage().getFieldType(name);
+            	Optional<TypeUsage> typeUsage = null;
+            	try {
+            		typeUsage = typeOfScope.asReferenceTypeUsage().getFieldType(name);
+            	} catch (UnsupportedOperationException ex) {
+            		//this could be a sub type rather a field
+            		return Optional.empty();
+            	}
                 if (typeUsage.isPresent()) {
                     return Optional.of(new Value(typeUsage.get(), name, true));
                 } else {

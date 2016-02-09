@@ -19,3 +19,9 @@ javadoc
 .gradle
 *.ipr
 *.iws
+
+#eclipse files
+.project
+.classpath
+.settings/
+.metadata/

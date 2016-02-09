@@ -3,6 +3,7 @@ package me.tomassetti.symbolsolver.model.declarations;
 import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsage;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Declaration of a Class (not an interface or an enum).
@@ -46,5 +47,11 @@ public interface ClassDeclaration extends TypeDeclaration, TypeParametrized {
      * declaration.
      */
     List<InterfaceDeclaration> getAllInterfaces();
+    
+    /**
+     * Return all the declared constructors
+     * @return
+     */
+    Set<ConstructorDeclaration> getDeclaredConstructors();
 
 }

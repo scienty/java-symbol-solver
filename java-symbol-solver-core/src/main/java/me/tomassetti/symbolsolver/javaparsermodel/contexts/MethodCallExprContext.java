@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.w3c.dom.Node;
+
 public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallExpr> {
 
     public MethodCallExprContext(MethodCallExpr wrappedNode, TypeSolver typeSolver) {
@@ -178,7 +180,12 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
             if (wrappedNode.getParentNode() instanceof MethodCallExpr) {
                 MethodCallExpr parent = (MethodCallExpr) wrappedNode.getParentNode();
                 if (parent.getScope() == wrappedNode) {
-                    return getParent().getParent().solveMethodAsUsage(name, parameterTypes, typeSolver);
+                	Context parentCtx = getParent();
+                	while ( parentCtx instanceof MethodCallExprContext ) {
+                		//Brake the infinite loop
+                		parentCtx = parentCtx.getParent();
+                	}
+                    return parentCtx.solveMethodAsUsage(name, parameterTypes, typeSolver);
                 }
             }
             Context parentContext = getParent();

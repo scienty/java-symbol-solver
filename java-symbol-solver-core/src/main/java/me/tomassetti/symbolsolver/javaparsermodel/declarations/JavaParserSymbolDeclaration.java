@@ -1,13 +1,17 @@
 package me.tomassetti.symbolsolver.javaparsermodel.declarations;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.BaseParameter;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MultiTypeParameter;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.Type;
+
 import me.tomassetti.symbolsolver.model.declarations.ValueDeclaration;
 import me.tomassetti.symbolsolver.model.resolution.TypeSolver;
 import me.tomassetti.symbolsolver.model.typesystem.PrimitiveTypeUsage;
@@ -37,7 +41,7 @@ public class JavaParserSymbolDeclaration implements ValueDeclaration {
         return new JavaParserSymbolDeclaration(wrappedNode, wrappedNode.getId().getName(), typeSolver, true, false, false);
     }
 
-    public static JavaParserSymbolDeclaration parameter(Parameter parameter, TypeSolver typeSolver) {
+    public static JavaParserSymbolDeclaration parameter(BaseParameter parameter, TypeSolver typeSolver) {
         return new JavaParserSymbolDeclaration(parameter, parameter.getId().getName(), typeSolver, false, true, false);
     }
 
@@ -105,7 +109,7 @@ public class JavaParserSymbolDeclaration implements ValueDeclaration {
     @Override
     public TypeUsage getType() {
         if (wrappedNode instanceof Parameter) {
-            Parameter parameter = (Parameter) wrappedNode;
+        	Parameter parameter = (Parameter) wrappedNode;
             if (wrappedNode.getParentNode() instanceof LambdaExpr) {
                 int pos = getParamPos(parameter);
                 TypeUsage lambdaType = JavaParserFacade.get(typeSolver).getType(wrappedNode.getParentNode());
@@ -121,6 +125,16 @@ public class JavaParserSymbolDeclaration implements ValueDeclaration {
                     return JavaParserFacade.get(typeSolver).convertToUsage(parameter.getType(), wrappedNode);
                 }
             }
+        } else if (wrappedNode instanceof MultiTypeParameter ) {
+        	//there wont be any lambdaExpr in CatchBlock 
+        	MultiTypeParameter parameter = (MultiTypeParameter) wrappedNode;
+        	Type highestType = parameter.getTypes().get(0);
+        	if ( highestType instanceof PrimitiveType) {
+                return PrimitiveTypeUsage.byName(((PrimitiveType) highestType).getType().name());
+            } else {
+                return JavaParserFacade.get(typeSolver).convertToUsage(highestType, wrappedNode);
+            }
+        	
         } else if (wrappedNode instanceof VariableDeclarator) {
             VariableDeclarator variableDeclarator = (VariableDeclarator) wrappedNode;
             if (wrappedNode.getParentNode() instanceof VariableDeclarationExpr) {

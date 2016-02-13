@@ -3,6 +3,8 @@ package me.tomassetti.symbolsolver.javaparsermodel.contexts;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+
 import me.tomassetti.symbolsolver.resolution.MethodResolutionLogic;
 import me.tomassetti.symbolsolver.model.declarations.MethodDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.TypeDeclaration;
@@ -80,8 +82,8 @@ public class ClassOrInterfaceDeclarationContext extends AbstractJavaParserContex
                 }
             }
         }
-
-        // then among inherited fields
+        
+        // then among inherited class fields
         if (!wrappedNode.isInterface() && wrappedNode.getExtends() != null && wrappedNode.getExtends().size() > 0) {
             String superClassName = wrappedNode.getExtends().get(0).getName();
             SymbolReference<TypeDeclaration> superClass = solveType(superClassName, typeSolver);
@@ -92,6 +94,28 @@ public class ClassOrInterfaceDeclarationContext extends AbstractJavaParserContex
             if (ref.isPresent()) {
                 return ref;
             }
+        }
+
+        // then among inherited interface fields
+        List<ClassOrInterfaceType> implementedInterfaces = null;
+        if (!wrappedNode.isInterface() && wrappedNode.getImplements() != null ) {
+        	implementedInterfaces = wrappedNode.getImplements();
+        } else if ( wrappedNode.isInterface() && wrappedNode.getExtends() != null ) {
+        	implementedInterfaces = wrappedNode.getExtends();
+        }
+        
+        if ( implementedInterfaces != null ) {
+        	for ( ClassOrInterfaceType interfaceType : implementedInterfaces ) {
+        		String interfaceName = interfaceType.getName();
+        		SymbolReference<TypeDeclaration> superIntf = solveType(interfaceName, typeSolver);
+        		if (!superIntf.isSolved()) {
+                    throw new UnsolvedTypeException(this, interfaceName);
+                }
+        		 Optional<Value> ref = superIntf.getCorrespondingDeclaration().getContext().solveSymbolAsValue(name, typeSolver);
+                 if (ref.isPresent()) {
+                     return ref;
+                 }
+        	}
         }
 
         // then to parent

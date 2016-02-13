@@ -143,6 +143,10 @@ public class JavaParserFacade {
             return result;
         }
     }
+    
+    public SymbolReference<? extends ValueDeclaration> solve(FieldAccessExpr fieldAccessExpr) {
+        return symbolSolver.solveSymbol(fieldAccessExpr.getField(), fieldAccessExpr);
+    }
 
     public SymbolReference<? extends ValueDeclaration> solve(NameExpr nameExpr) {
         return symbolSolver.solveSymbol(nameExpr.getName(), nameExpr);
@@ -151,8 +155,10 @@ public class JavaParserFacade {
     public SymbolReference solve(Expression expr) {
         if (expr instanceof NameExpr) {
             return solve((NameExpr) expr);
+        } else if ( expr instanceof FieldAccessExpr ) {
+            return solve((FieldAccessExpr)expr);
         } else {
-            throw new IllegalArgumentException(expr.getClass().getCanonicalName());
+        	throw new IllegalArgumentException(expr.getClass().getCanonicalName());
         }
     }
 

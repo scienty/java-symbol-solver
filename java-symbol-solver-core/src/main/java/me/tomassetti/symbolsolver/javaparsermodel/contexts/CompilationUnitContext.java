@@ -116,13 +116,24 @@ public class CompilationUnitContext extends AbstractJavaParserContext<Compilatio
         }
 
         if (wrappedNode.getImports() != null) {
+        	String importName = name;
+        	int dotIndex = name.indexOf('.');
+        	if ( dotIndex != -1 ) {
+        		importName = name.substring(0, dotIndex);
+        	}
             for (ImportDeclaration importDecl : wrappedNode.getImports()) {
                 if (!importDecl.isStatic()) {
                     if (!importDecl.isAsterisk()) {
                         if (importDecl.getName() instanceof QualifiedNameExpr) {
                             String qName = importDecl.getName().toString();
-                            if (qName.equals(name) || qName.endsWith("." + name)) {
+                            if (qName.equals(name) || qName.endsWith("." + name) ) {
                                 SymbolReference<me.tomassetti.symbolsolver.model.declarations.TypeDeclaration> ref = typeSolver.tryToSolveType(qName);
+                                if (ref.isSolved()) {
+                                    return ref;
+                                }
+                            } else if ( qName.equals(importName) || qName.endsWith("." + importName) && dotIndex != -1 ) {
+                            	qName = qName + name.substring(dotIndex);
+                            	SymbolReference<me.tomassetti.symbolsolver.model.declarations.TypeDeclaration> ref = typeSolver.tryToSolveType(qName);
                                 if (ref.isSolved()) {
                                     return ref;
                                 }

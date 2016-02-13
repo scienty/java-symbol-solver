@@ -13,7 +13,7 @@ public class PrimitiveTypeUsage implements TypeUsage {
     public static final PrimitiveTypeUsage SHORT = new PrimitiveTypeUsage("short", Short.class.getCanonicalName(), ImmutableList.of(BYTE));
     public static final PrimitiveTypeUsage INT = new PrimitiveTypeUsage("int", Integer.class.getCanonicalName(), ImmutableList.of(BYTE, SHORT));
     public static final PrimitiveTypeUsage LONG = new PrimitiveTypeUsage("long", Long.class.getCanonicalName(), ImmutableList.of(BYTE, SHORT, INT));
-    public static final PrimitiveTypeUsage CHAR = new PrimitiveTypeUsage("char", Character.class.getCanonicalName(), ImmutableList.of());
+    public static final PrimitiveTypeUsage CHAR = new PrimitiveTypeUsage("char", Character.class.getCanonicalName(), ImmutableList.of(INT));
     public static final PrimitiveTypeUsage BOOLEAN = new PrimitiveTypeUsage("boolean", Boolean.class.getCanonicalName(), ImmutableList.of());
     public static final PrimitiveTypeUsage FLOAT = new PrimitiveTypeUsage("float", Float.class.getCanonicalName(), ImmutableList.of());
     public static final PrimitiveTypeUsage DOUBLE = new PrimitiveTypeUsage("double", Double.class.getCanonicalName(), ImmutableList.of(FLOAT));

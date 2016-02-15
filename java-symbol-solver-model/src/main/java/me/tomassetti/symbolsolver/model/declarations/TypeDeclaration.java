@@ -48,6 +48,9 @@ public interface TypeDeclaration extends Declaration, TypeParametrized {
      * Bar I should get a FieldDeclaration with type String.
      */
     FieldDeclaration getField(String name);
+    
+    List<FieldDeclaration> getAllFields();
+    List<FieldDeclaration> getDeclaredFields();
 
     boolean hasField(String name);
 

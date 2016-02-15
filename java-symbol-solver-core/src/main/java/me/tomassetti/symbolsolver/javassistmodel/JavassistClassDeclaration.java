@@ -2,6 +2,7 @@ package me.tomassetti.symbolsolver.javassistmodel;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.BodyDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
 
 import javassist.CtClass;
 import javassist.CtField;
@@ -22,7 +23,9 @@ import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsageImpl;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.resolution.*;
 import me.tomassetti.symbolsolver.javaparsermodel.LambdaArgumentTypeUsagePlaceholder;
+import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserConstructorDeclaration;
+import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserFieldDeclaration;
 import me.tomassetti.symbolsolver.javassistmodel.contexts.JavassistMethodContext;
 
 import java.util.*;
@@ -314,10 +317,36 @@ public class JavassistClassDeclaration extends AbstractClassDeclaration {
     public boolean isTypeVariable() {
         return false;
     }
+    
+    @Override
+    public List<FieldDeclaration> getAllFields() {
+    	List<FieldDeclaration> allFields = new LinkedList<>();
+    	for (CtField ctField : this.ctClass.getFields()) {
+    		allFields.add(new JavassistFieldDeclaration(ctField, typeSolver));
+        }
+        
+        return allFields;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getDeclaredFields() {
+    	List<FieldDeclaration> declFields = new LinkedList<>();
+    	for (CtField ctField : this.ctClass.getDeclaredFields()) {
+    		declFields.add(new JavassistFieldDeclaration(ctField, typeSolver));
+        }
+        
+        return declFields;
+    }
 
     @Override
     public FieldDeclaration getField(String name) {
-        throw new UnsupportedOperationException();
+    	for (CtField ctField : this.ctClass.getFields()) {
+    		if ( ctField.getName().equals(name)) {
+    			return new JavassistFieldDeclaration(ctField, typeSolver);
+    		}
+        }
+    	
+    	throw new UnsolvedSymbolException("In class " + this, name);
     }
 
     @Override

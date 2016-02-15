@@ -168,4 +168,14 @@ public class JavaParserTypeParameter extends AbstractTypeDeclaration implements 
 	{
 		return wrappedNode;
 	}
+
+	@Override
+	public List<FieldDeclaration> getAllFields() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<FieldDeclaration> getDeclaredFields() {
+		throw new UnsupportedOperationException();
+	}
 }

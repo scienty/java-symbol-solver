@@ -1,6 +1,7 @@
 package me.tomassetti.symbolsolver.javassistmodel;
 
 import javassist.CtClass;
+import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import javassist.bytecode.BadBytecode;
@@ -17,6 +18,7 @@ import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsage;
 import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsageImpl;
 import me.tomassetti.symbolsolver.model.typesystem.TypeUsage;
 import me.tomassetti.symbolsolver.resolution.SymbolSolver;
+import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 import me.tomassetti.symbolsolver.javassistmodel.contexts.JavassistMethodContext;
 
 import java.util.*;
@@ -185,10 +187,36 @@ public class JavassistInterfaceDeclaration extends AbstractTypeDeclaration imple
     public boolean isAssignableBy(TypeUsage typeUsage) {
         throw new UnsupportedOperationException();
     }
+    
+    @Override
+    public List<FieldDeclaration> getAllFields() {
+    	List<FieldDeclaration> allFields = new LinkedList<>();
+    	for (CtField ctField : this.ctClass.getFields()) {
+    		allFields.add(new JavassistFieldDeclaration(ctField, typeSolver));
+        }
+        
+        return allFields;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getDeclaredFields() {
+    	List<FieldDeclaration> declFields = new LinkedList<>();
+    	for (CtField ctField : this.ctClass.getDeclaredFields()) {
+    		declFields.add(new JavassistFieldDeclaration(ctField, typeSolver));
+        }
+        
+        return declFields;
+    }
 
     @Override
     public FieldDeclaration getField(String name) {
-        throw new UnsupportedOperationException();
+    	for (CtField ctField : this.ctClass.getFields()) {
+    		if ( ctField.getName().equals(name)) {
+    			return new JavassistFieldDeclaration(ctField, typeSolver);
+    		}
+        }
+    	
+    	throw new UnsolvedSymbolException("In class " + this, name);
     }
 
     @Override

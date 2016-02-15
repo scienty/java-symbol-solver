@@ -6,6 +6,7 @@ import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.ModifierSet;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
@@ -27,6 +28,7 @@ import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -230,6 +232,37 @@ public class JavaParserClassDeclaration extends AbstractClassDeclaration {
     @Override
     public boolean isTypeVariable() {
         return false;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getAllFields() {
+    	List<FieldDeclaration> allFields = getDeclaredFields();
+    	ClassDeclaration superclass = (ClassDeclaration) this.getSuperClass().getTypeDeclaration();
+        if (superclass != null) {
+        	allFields.addAll(superclass.getDeclaredFields());   
+        }
+        
+        List<InterfaceDeclaration> intfs = this.getInterfaces();
+        for (InterfaceDeclaration intf : intfs ) {
+        	allFields.addAll(intf.getAllFields());
+        }
+        
+        return allFields;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getDeclaredFields() {
+    	List<FieldDeclaration> declFields = new LinkedList<>();
+    	for (BodyDeclaration member : this.wrappedNode.getMembers()) {
+            if (member instanceof com.github.javaparser.ast.body.FieldDeclaration) {
+                com.github.javaparser.ast.body.FieldDeclaration field = (com.github.javaparser.ast.body.FieldDeclaration) member;
+                for (VariableDeclarator vd : field.getVariables()) {
+                	declFields.add(new JavaParserFieldDeclaration(vd, typeSolver));
+                }
+            }
+        }
+        
+        return declFields;
     }
 
     @Override

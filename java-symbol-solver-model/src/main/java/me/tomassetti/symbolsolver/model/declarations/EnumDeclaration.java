@@ -1,5 +1,7 @@
 package me.tomassetti.symbolsolver.model.declarations;
 
+import java.util.List;
+
 import me.tomassetti.symbolsolver.model.typesystem.ReferenceTypeUsage;
 
 /**
@@ -15,4 +17,6 @@ public interface EnumDeclaration extends TypeDeclaration {
     }
     
     ReferenceTypeUsage getSuperClass();
+
+	List<InterfaceDeclaration> getInterfaces();
 }

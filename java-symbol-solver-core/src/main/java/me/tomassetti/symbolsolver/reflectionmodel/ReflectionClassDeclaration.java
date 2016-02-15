@@ -5,6 +5,7 @@ import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 
+import javassist.CtField;
 import me.tomassetti.symbolsolver.logic.AbstractClassDeclaration;
 import me.tomassetti.symbolsolver.resolution.MethodResolutionLogic;
 import me.tomassetti.symbolsolver.model.declarations.*;
@@ -22,6 +23,7 @@ import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import me.tomassetti.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
 import me.tomassetti.symbolsolver.javassistmodel.JavassistConstructorDeclaration;
+import me.tomassetti.symbolsolver.javassistmodel.JavassistFieldDeclaration;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -243,6 +245,33 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
     @Override
     public boolean isTypeVariable() {
         return false;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getAllFields() {
+    	List<FieldDeclaration> allFields = getDeclaredFields();
+    	
+    	ClassDeclaration superclass = (ClassDeclaration) this.getSuperClass().getTypeDeclaration();
+        if (superclass != null) {
+        	allFields.addAll(superclass.getDeclaredFields());   
+        }
+        
+        List<InterfaceDeclaration> intfs = this.getInterfaces();
+        for (InterfaceDeclaration intf : intfs ) {
+        	allFields.addAll(intf.getAllFields());
+        }
+        
+        return allFields;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getDeclaredFields() {
+    	List<FieldDeclaration> declFields = new LinkedList<>();
+    	for (Field field : clazz.getDeclaredFields()) {
+        	declFields.add(new ReflectionFieldDeclaration(field, typeSolver));
+        }
+        
+        return declFields;
     }
 
     @Override

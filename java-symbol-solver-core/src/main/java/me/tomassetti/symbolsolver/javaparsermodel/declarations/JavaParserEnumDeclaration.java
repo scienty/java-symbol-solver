@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 import me.tomassetti.symbolsolver.logic.AbstractTypeDeclaration;
 import me.tomassetti.symbolsolver.model.declarations.*;
@@ -26,6 +27,7 @@ import me.tomassetti.symbolsolver.javaparsermodel.UnsolvedSymbolException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -162,6 +164,52 @@ public class JavaParserEnumDeclaration extends AbstractTypeDeclaration implement
     @Override
     public boolean isTypeVariable() {
         return false;
+    }
+    
+    @Override
+    public List<InterfaceDeclaration> getInterfaces() {
+        List<InterfaceDeclaration> interfaces = new ArrayList<>();
+        if (wrappedNode.getImplements() != null) {
+            for (ClassOrInterfaceType t : wrappedNode.getImplements()) {
+                interfaces.add(solveType(t.getName(), typeSolver).getCorrespondingDeclaration().asType().asInterface());
+            }
+        }
+        return interfaces;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getAllFields() {
+    	List<FieldDeclaration> allFields = getDeclaredFields();
+    	
+        List<InterfaceDeclaration> intfs = getInterfaces();
+        for (InterfaceDeclaration intf : intfs ) {
+        	allFields.addAll(intf.getAllFields());
+        }
+        
+        return allFields;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getDeclaredFields() {
+    	List<FieldDeclaration> declFields = new LinkedList<>();
+    	if (this.wrappedNode.getMembers() != null) {
+            for (BodyDeclaration member : this.wrappedNode.getMembers()) {
+                if (member instanceof com.github.javaparser.ast.body.FieldDeclaration) {
+                    com.github.javaparser.ast.body.FieldDeclaration field = (com.github.javaparser.ast.body.FieldDeclaration) member;
+                    for (VariableDeclarator vd : field.getVariables()) {
+                    	declFields.add(new JavaParserFieldDeclaration(vd, typeSolver));
+                    }
+                }
+            }
+        }
+
+        if (this.wrappedNode.getEntries() != null) {
+            for (EnumConstantDeclaration member : this.wrappedNode.getEntries()) {
+            	declFields.add(new JavaParserFieldDeclaration(member));
+            }
+        }
+        
+        return declFields;
     }
 
     @Override

@@ -184,6 +184,28 @@ public class ReflectionInterfaceDeclaration extends AbstractTypeDeclaration impl
     public boolean isTypeVariable() {
         return false;
     }
+    
+    @Override
+    public List<FieldDeclaration> getAllFields() {
+    	List<FieldDeclaration> allFields = getDeclaredFields();
+        
+        List<InterfaceDeclaration> intfs = this.getInterfacesExtended();
+        for (InterfaceDeclaration intf : intfs ) {
+        	allFields.addAll(intf.getAllFields());
+        }
+        
+        return allFields;
+    }
+    
+    @Override
+    public List<FieldDeclaration> getDeclaredFields() {
+    	List<FieldDeclaration> declFields = new LinkedList<>();
+    	for (Field field : clazz.getDeclaredFields()) {
+        	declFields.add(new ReflectionFieldDeclaration(field, typeSolver));
+        }
+        
+        return declFields;
+    }
 
     @Override
     public FieldDeclaration getField(String name) {
